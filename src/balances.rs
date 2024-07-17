@@ -8,7 +8,7 @@ pub struct Pallet {
 
 impl Pallet {
     /// Create a new instance of our balances module.
-    pub fn new(&self) -> Self {
+    pub fn new() -> Self {
         Self {
             balances: BTreeMap::new(),
         }
@@ -23,5 +23,23 @@ impl Pallet {
     /// If the account has no stored balance, we return zero.
     pub fn balance(&self, who: &String) -> u128 {
         *self.balances.get(who).unwrap_or(&0) 
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn init_balances(){
+        // Instantiating a balances struct.
+        let mut balances = crate::balances::Pallet::new();
+
+        // Assert that the balance of "alice" starts at zero. 
+        assert_eq!(balances.balance(&"alice".to_string()), 0) ;
+        // Set balance of "alice" to 100.
+        balances.set_balance(&"alice".to_string(), 100) ;
+        // Assert that "alice" has now balance of 100.
+        assert_eq!(balances.balance(&"alice".to_string()), 100) ;
+        // Assert balance of "bob" has not changed and is equal to zero.
+        assert_eq!(balances.balance(&"bob".to_string()), 0) ;
     }
 }
