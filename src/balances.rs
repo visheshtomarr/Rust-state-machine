@@ -2,6 +2,7 @@ use std::collections::BTreeMap ;
 
 /// This is the Balances module.
 /// It is a simple module that keeps track of how much balance a user has in our state machine.
+#[derive(Debug)]
 pub struct Pallet {
     balances: BTreeMap<String, u128>,
 }
