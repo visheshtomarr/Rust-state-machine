@@ -3,10 +3,7 @@ use std::collections::BTreeMap ;
 
 /// The Config trait for the Balances module.
 /// It contains the types AccountId & Balance for handling balance of a user.
-pub trait Config {
-    /// A type to identify account in our state machine.
-    /// On a real blockchain, we would want this to be a cryptgraphic public key.
-    type AccountId: Ord + Clone ;
+pub trait Config: crate::system::Config {
     /// A type which can represent the balance of an account.
     /// Usually it is a large unsigned integer.
     type Balance: Zero + CheckedAdd + CheckedSub + Copy ;
@@ -67,8 +64,12 @@ impl<T: Config> Pallet<T> {
 #[cfg(test)]
 mod tests {
     struct TestConfig ;
-    impl crate::balances::Config for TestConfig {
+    impl crate::system::Config for TestConfig {
         type AccountId = String ;
+        type BlockNumber = u32 ;
+        type Nonce = u32 ;
+    }
+    impl crate::balances::Config for TestConfig {
         type Balance = u128 ;
     }
 
