@@ -1,10 +1,13 @@
 use std::collections::BTreeMap ; 
 
+type AccountId = String ;
+type Balance = u128 ;
+
 /// This is the Balances module.
 /// It is a simple module that keeps track of how much balance a user has in our state machine.
 #[derive(Debug)]
 pub struct Pallet {
-    balances: BTreeMap<String, u128>,
+    balances: BTreeMap<AccountId, Balance>,
 }
 
 impl Pallet {
@@ -16,13 +19,13 @@ impl Pallet {
     }
 
     /// Set the balance of an account "who" to some "amount".
-    pub fn set_balance(&mut self, who: &String, amount: u128) {
+    pub fn set_balance(&mut self, who: &AccountId, amount: Balance) {
         self.balances.insert(who.clone(), amount) ;
     }
 
     /// Get the balance of an account "who".
     /// If the account has no stored balance, we return zero.
-    pub fn balance(&self, who: &String) -> u128 {
+    pub fn balance(&self, who: &AccountId) -> Balance {
         *self.balances.get(who).unwrap_or(&0) 
     }
 
@@ -31,9 +34,9 @@ impl Pallet {
     /// mathematical overflow occurs.
     pub fn transfer(
         &mut self, 
-        caller: String,
-        to: String,
-        amount: u128
+        caller: AccountId,
+        to: AccountId,
+        amount: Balance
     ) -> Result<(), &'static str> {
 
         // Get balance of both user pre-transfer.
