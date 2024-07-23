@@ -1,18 +1,25 @@
 use::num::traits::{CheckedAdd, CheckedSub, Zero} ;
-use std::collections::BTreeMap ; 
+use std::collections::BTreeMap ;
+
+/// The Config trait for the Balances module.
+/// It contains the types AccountId & Balance for handling balance of a user.
+pub trait Config {
+    /// A type to identify account in our state machine.
+    /// On a real blockchain, we would want this to be a cryptgraphic public key.
+    type AccountId: Ord + Clone ;
+    /// A type which can represent the balance of an account.
+    /// Usually it is a large unsigned integer.
+    type Balance: Zero + CheckedAdd + CheckedSub + Copy ;
+}
 
 /// This is the Balances module.
 /// It is a simple module that keeps track of how much balance a user has in our state machine.
 #[derive(Debug)]
-pub struct Pallet<AccountId, Balance> {
-    balances: BTreeMap<AccountId, Balance>,
+pub struct Pallet<T: Config> {
+    balances: BTreeMap<T::AccountId, T::Balance>,
 }
 
-impl<AccountId, Balance> Pallet<AccountId, Balance>
-where 
-    AccountId: Ord + Clone,
-    Balance: Zero + CheckedAdd + CheckedSub + Copy,
-{
+impl<T: Config> Pallet<T> {
     /// Create a new instance of our balances module.
     pub fn new() -> Self {
         Self {
@@ -21,14 +28,14 @@ where
     }
 
     /// Set the balance of an account "who" to some "amount".
-    pub fn set_balance(&mut self, who: &AccountId, amount: Balance) {
+    pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
         self.balances.insert(who.clone(), amount) ;
     }
 
     /// Get the balance of an account "who".
     /// If the account has no stored balance, we return zero.
-    pub fn balance(&self, who: &AccountId) -> Balance {
-        *self.balances.get(who).unwrap_or(&Balance::zero()) 
+    pub fn balance(&self, who: &T::AccountId) -> T::Balance {
+        *self.balances.get(who).unwrap_or(&T::Balance::zero()) 
     }
 
     /// Transfer some "amount" from one account to another.
@@ -36,9 +43,9 @@ where
     /// mathematical overflow occurs.
     pub fn transfer(
         &mut self, 
-        caller: AccountId,
-        to: AccountId,
-        amount: Balance
+        caller: T::AccountId,
+        to: T::AccountId,
+        amount: T::Balance
     ) -> Result<(), &'static str> {
 
         // Get balance of both user pre-transfer.
@@ -59,10 +66,16 @@ where
 
 #[cfg(test)]
 mod tests {
+    struct TestConfig ;
+    impl crate::balances::Config for TestConfig {
+        type AccountId = String ;
+        type Balance = u128 ;
+    }
+
     #[test]
     fn init_balances() {
         // Instantiating a balances struct.
-        let mut balances = super::Pallet::<String, u128>::new();
+        let mut balances = super::Pallet::<TestConfig>::new();
 
         // Assert that the balance of "alice" starts at zero. 
         assert_eq!(balances.balance(&"alice".to_string()), 0) ;
@@ -77,7 +90,7 @@ mod tests {
     #[test]
     fn transfer_balance() {
         // Instantiating a balances struct
-        let mut balances = super::Pallet::<String, u128>::new() ;
+        let mut balances = super::Pallet::<TestConfig>::new() ;
         
         // Alice cannot transfer funds she doesn't have.
         assert_eq!(
