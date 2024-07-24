@@ -19,6 +19,10 @@ mod types {
 /// These are the calls which are exposed to the outside world.
 /// It is just an accumulation of the calls exposed by each pallets.
 pub enum RuntimeCall {
+	Transfer { 
+		to: types::AccountId, 
+		amount: types::Balance,
+	}
 }
 
 /// This is our main Runtime.
@@ -74,12 +78,23 @@ impl Runtime {
 }
 
 impl crate::support::Dispatch for Runtime {
-	type Caller = types::AccountId ;
+	type Caller = <Runtime as system::Config>::AccountId ;
 	type Call = RuntimeCall ;
 
-	fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> support::DispatchResult {
-		unimplemented!()
-	} 
+	// Dispatch a call on behalf of the caller. Increments the caller's nonce.
+	// This function allows us to identify which underlying module call we want to execute.
+	fn dispatch(
+		&mut self, 
+		caller: Self::Caller,
+		runtime_call: Self::Call
+	) -> crate::support::DispatchResult {
+		match runtime_call {
+			RuntimeCall::Transfer { to, amount } => {
+				self.balances.transfer(caller, to, amount) ?;
+			},
+		}
+		Ok(())
+	}
 }
 
 fn main() {
