@@ -43,7 +43,7 @@ impl<T: Config> Pallet<T> {
         caller: T::AccountId,
         to: T::AccountId,
         amount: T::Balance
-    ) -> Result<(), &'static str> {
+    ) -> crate::support::DispatchResult {
 
         // Get balance of both user pre-transfer.
         let caller_balance = self.balance(&caller) ;
