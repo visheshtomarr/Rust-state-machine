@@ -2,6 +2,8 @@ mod balances ;
 mod system ;
 mod support ;
 
+use crate::support::Dispatch ;
+
 /// These are the concrete types we will be using in our simple state machine.
 /// Modules are configured for these types directly, and they satisfy all of our trait requirements.
 mod types {
@@ -9,6 +11,14 @@ mod types {
 	pub type Balance = u128 ; 
 	pub type BlockNumber = u32 ;
 	pub type Nonce = u32 ;
+	pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall> ;
+	pub type Header = crate::support::Header<BlockNumber> ;
+	pub type Block = crate::support::Block<Header, Extrinsic> ;
+}
+
+/// These are the calls which are exposed to the outside world.
+/// It is just an accumulation of the calls exposed by each pallets.
+pub enum RuntimeCall {
 }
 
 /// This is our main Runtime.
@@ -37,6 +47,39 @@ impl Runtime {
 			balances: balances::Pallet::new(),
 		}
 	}
+
+	/// Execute a block of extrinsics. Incrememts the block number.
+	pub fn execute_block(&mut self, block: types::Block) -> crate::support::DispatchResult {
+		// Increment system's block number.
+		self.system.inc_block_number() ;
+
+		// Check the current block number 
+		if self.system.block_number() != block.header.block_number {
+			return Err("The current block number is invalid.") ;
+		}
+
+		for (i, crate::support::Extrinsic {caller, call}) in block.extrinsics.into_iter().enumerate() {
+			// Increment the nonce of caller.
+			self.system.inc_nonce(&caller) ;
+
+			let _res = self.dispatch(caller, call).map_err(|e| {
+				eprintln!(
+					"Extrinsic Error\n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
+					block.header.block_number, i, e
+				)
+			}) ;
+		}
+		Ok(())
+	} 
+}
+
+impl crate::support::Dispatch for Runtime {
+	type Caller = types::AccountId ;
+	type Call = RuntimeCall ;
+
+	fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> support::DispatchResult {
+		unimplemented!()
+	} 
 }
 
 fn main() {
