@@ -19,10 +19,7 @@ mod types {
 /// These are the calls which are exposed to the outside world.
 /// It is just an accumulation of the calls exposed by each pallets.
 pub enum RuntimeCall {
-	Transfer { 
-		to: types::AccountId, 
-		amount: types::Balance,
-	}
+	Balances(balances::Call<Runtime>),
 }
 
 /// This is our main Runtime.
@@ -89,8 +86,8 @@ impl crate::support::Dispatch for Runtime {
 		runtime_call: Self::Call
 	) -> crate::support::DispatchResult {
 		match runtime_call {
-			RuntimeCall::Transfer { to, amount } => {
-				self.balances.transfer(caller, to, amount) ?;
+			RuntimeCall::Balances(call) => {
+				self.balances.dispatch(caller, call) ?;
 			},
 		}
 		Ok(())
@@ -117,11 +114,11 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic{
 				caller: alice.clone(),
-				call: RuntimeCall::Transfer { to: bob, amount: 30 }
+				call: RuntimeCall::Balances(balances::Call::Transfer { to: bob, amount: 30 })
 			},
 			support::Extrinsic{
 				caller: alice,
-				call: RuntimeCall::Transfer { to: charlie, amount: 20 }
+				call: RuntimeCall::Balances(balances::Call::Transfer { to: charlie, amount: 20 })
 			}],
 	};
 
