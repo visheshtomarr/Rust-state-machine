@@ -66,3 +66,51 @@ impl<T:Config> Pallet<T> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    struct TestConfig ;
+    impl crate::proof_of_existence::Config for TestConfig {
+        type Content = &'static str ;
+    }
+
+    impl crate::system::Config for TestConfig {
+        type AccountId = String ;
+        type BlockNumber = u32 ;
+        type Nonce = u32 ;
+    }
+
+    #[test]
+    fn init_proof_of_existence() {
+        let mut proof_of_existence = crate::proof_of_existence::Pallet::<TestConfig>::new() ;
+        
+        let alice = "alice".to_string() ;
+        let bob = "bob".to_string() ;
+
+        // In initial state, "hello" is not claimed by anyone.
+        assert_eq!(proof_of_existence.get_claim(&"hello"), None) ;
+        
+        // Creating claim for 'alice'.
+        let _ = proof_of_existence.create_claim(alice.clone(), "hello");
+        assert_eq!(proof_of_existence.get_claim(&"hello"), Some(&alice)) ;
+
+        // Since alice is owner of claim, "hello", bob cannot claim this content.
+        assert_eq!(
+            proof_of_existence.create_claim(bob.clone(), "hello"),
+            Err("This content is already been claimed.")
+        ) ;
+
+        // Since alice is owner of claim, "hello", bob cannot revoke this claim.
+        assert_eq!(
+            proof_of_existence.revoke_claim(bob.clone(), "hello"),
+            Err("This content is owned by some other user.")
+        ) ;
+        
+        // Revoke claim "hello" for alice.
+        let _ = proof_of_existence.revoke_claim(alice, "hello") ;
+        
+        // Now, bob can claim "hello".
+        let _ = proof_of_existence.create_claim(bob.clone(), "hello");
+        assert_eq!(proof_of_existence.get_claim(&"hello"), Some(&bob)) ;
+    }
+}
