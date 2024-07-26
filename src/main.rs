@@ -126,16 +126,43 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic{
 				caller: alice.clone(),
-				call: RuntimeCall::Balances(balances::Call::Transfer { to: bob, amount: 30 })
+				call: RuntimeCall::Balances(balances::Call::Transfer { to: bob.clone(), amount: 30 })
 			},
 			support::Extrinsic{
-				caller: alice,
+				caller: alice.clone(),
 				call: RuntimeCall::Balances(balances::Call::Transfer { to: charlie, amount: 20 })
 			}],
 	};
 
-	// Executing block.
-	runtime.execute_block(block_1).expect("Invalid block.") ; 
+	// Instantiating second block and executing extrinsics.
+	let block_2 = types::Block {
+		header: support::Header { 
+			block_number: 2 
+		},
+		extrinsics: vec![
+			support::Extrinsic {
+				caller: alice.clone(),
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim { claim: "Hello" })
+			},
+			support::Extrinsic {
+				caller: bob.clone(),
+				// This will result into an error as the content "Hello" has already been claimed by 'alice'.
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim { claim: "Hello" })
+			},
+			support::Extrinsic {
+				caller: alice,
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim { claim: "Hello" })
+			},
+			support::Extrinsic {
+				caller: bob,
+				// Since, 'alice' has revoked her claim, 'bob' can now claim the content, "Hello".
+ 				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim { claim: "Hello" })
+			}]
+	} ;
+
+	// Executing blocks.
+	runtime.execute_block(block_1).expect("Invalid block.") ;
+	runtime.execute_block(block_2).expect("Invalid block.") ;
 
 	// Print our final runtime.
 	println!("{:#?}", runtime) ;
