@@ -34,7 +34,12 @@ impl<T: Config> Pallet<T> {
     pub fn balance(&self, who: &T::AccountId) -> T::Balance {
         *self.balances.get(who).unwrap_or(&T::Balance::zero()) 
     }
+}
 
+// Only this function will be called by the user from this pallet, so we will separate this from the other 
+// pallet functions and only add rust macro to this implementation of our Pallet.
+#[macros::call]
+impl<T: Config> Pallet<T> {
     /// Transfer some "amount" from one account to another.
     /// This function verifies that "from" has atleast "amount" balance to transfer and that no
     /// mathematical overflow occurs.
@@ -61,35 +66,39 @@ impl<T: Config> Pallet<T> {
     }
 }
 
-/// A public enum which describes the calls we want to expose to the dispatcher.
-// We should expect that the caller of each call will be provided by the dispatcher, and not included as a 
-// parameter of the call.
-pub enum Call<T: Config> {
-    Transfer {
-        to: T::AccountId,
-        amount: T::Balance,
-    }
-}
+// Since we are using rust macros, the enum 'Call' and implementation of 'Dispatch' will be provided by 
+// rust macros themselves.
 
-/// Implementation of the dispatch logic, mapping the 'BalancesCall' to the appropriate underlying function 
-/// we want to execute.
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-    type Caller = T::AccountId ;
-    type Call = Call<T> ;
+// /// A public enum which describes the calls we want to expose to the dispatcher.
+// // We should expect that the caller of each call will be provided by the dispatcher, and not included as a 
+// // parameter of the call.
+// pub enum Call<T: Config> {
+//     Transfer {
+//         to: T::AccountId,
+//         amount: T::Balance,
+//     }
+// }
 
-    fn dispatch(
-        &mut self, 
-        caller: Self::Caller, 
-        call: Self::Call
-    ) -> crate::support::DispatchResult {
-        match call {
-            Call::Transfer { to, amount } => {
-            self.transfer(caller, to, amount) ?;
-            },
-        }
-        Ok(())
-    }    
-}
+// /// Implementation of the dispatch logic, mapping the 'BalancesCall' to the appropriate underlying function 
+// /// we want to execute.
+// impl<T: Config> crate::support::Dispatch for Pallet<T> {
+//     type Caller = T::AccountId ;
+//     type Call = Call<T> ;
+
+//     fn dispatch(
+//         &mut self, 
+//         caller: Self::Caller, 
+//         call: Self::Call
+//     ) -> crate::support::DispatchResult {
+//         match call {
+//             Call::Transfer { to, amount } => {
+//             self.transfer(caller, to, amount) ?;
+//             },
+//         }
+//         Ok(())
+//     }    
+// }
+
 #[cfg(test)]
 mod tests {
     struct TestConfig ;

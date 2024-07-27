@@ -31,7 +31,12 @@ impl<T:Config> Pallet<T> {
     pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountId> {
         self.claims.get(claim)
     }
+}
 
+// Only these function will be called by the user from this pallet, so we will separate these from the other 
+// pallet functions and only add rust macro to this implementation of our Pallet.
+#[macros::call]
+impl<T: Config> Pallet<T> {
     /// Create a claim on behalf of the 'caller'.
     /// If the content is already claimed by some other user, the function will return an error.
     pub fn create_claim(
@@ -68,34 +73,38 @@ impl<T:Config> Pallet<T> {
     }
 }
 
-/// A public enum which describes the calls we want to expose to the dispatcher.
-// We should expect that the caller of each call will be provided by the dispatcher, and not included as a 
-// parameter of the call.
-pub enum Call<T: Config> {
-    CreateClaim { claim: T::Content },
-    RevokeClaim {claim: T::Content },
-}
 
-/// Implementation of the dispatch logic, mapping from 'POECall' to the appropriate underlying functions we want to execute.
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-    type Caller = T::AccountId ;
-    type Call = Call<T>;
+// Since we are using rust macros, the enum 'Call' and implementation of 'Dispatch' will be provided by 
+// rust macros themselves.
 
-    fn dispatch(&mut self,
-        caller: Self::Caller,
-        call: Self::Call
-    ) -> DispatchResult {
-        match call {
-            Call::CreateClaim { claim } => {
-                self.create_claim(caller, claim) ?; 
-            },
-            Call::RevokeClaim { claim } => {
-                self.revoke_claim(caller, claim) ?;
-            },
-        } 
-        Ok(())
-    }
-}
+// /// A public enum which describes the calls we want to expose to the dispatcher.
+// // We should expect that the caller of each call will be provided by the dispatcher, and not included as a 
+// // parameter of the call.
+// pub enum Call<T: Config> {
+//     CreateClaim { claim: T::Content },
+//     RevokeClaim {claim: T::Content },
+// }
+
+// /// Implementation of the dispatch logic, mapping from 'POECall' to the appropriate underlying functions we want to execute.
+// impl<T: Config> crate::support::Dispatch for Pallet<T> {
+//     type Caller = T::AccountId ;
+//     type Call = Call<T>;
+
+//     fn dispatch(&mut self,
+//         caller: Self::Caller,
+//         call: Self::Call
+//     ) -> DispatchResult {
+//         match call {
+//             Call::CreateClaim { claim } => {
+//                 self.create_claim(caller, claim) ?; 
+//             },
+//             Call::RevokeClaim { claim } => {
+//                 self.revoke_claim(caller, claim) ?;
+//             },
+//         } 
+//         Ok(())
+//     }
+// }
 
 #[cfg(test)]
 mod test {
